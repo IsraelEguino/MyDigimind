@@ -15,13 +15,17 @@ import androidx.lifecycle.ViewModelProvider
 import eguino.iribe.mydigimind.Carrito
 import eguino.iribe.mydigimind.R
 import eguino.iribe.mydigimind.Recordatorio
+import eguino.iribe.mydigimind.ui.Task
 import kotlinx.android.synthetic.main.recordatorio.view.*
 
 class HomeFragment : Fragment() {
-
+    private var adaptador: AdaptadorTareas?=null
     private lateinit var homeViewModel: HomeViewModel
-    var adapter: CarritoAdapter? = null
 
+    companion object{
+        var tasks = ArrayList<Task>()
+        var first= true
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -31,54 +35,65 @@ class HomeFragment : Fragment() {
         homeViewModel =
             ViewModelProvider(this).get(HomeViewModel::class.java)
         val root = inflater.inflate(R.layout.fragment_home, container, false)
-        val gridview = root.findViewById(R.id.gridview) as GridView
+        if(first) {
+            fillTask()
+            first=false
+        }
 
-        var carrito: Carrito = Carrito()
-        carrito.agregar(Recordatorio("Mon Sat", "08:12", "Levantarse"))
-        carrito.agregar(Recordatorio("Fri Sun", "10:15", "Salir a correr"))
+        adaptador = AdaptadorTareas(root.context,tasks)
+        val gridView: GridView = root.findViewById(R.id.gridview)
+        gridView.adapter=adaptador
 
 
-        var adapter = CarritoAdapter(this.context,carrito)
-        gridview.adapter=adapter
-
-        homeViewModel.text.observe(viewLifecycleOwner, Observer {
-
-        })
         return root
     }
 
-    class CarritoAdapter : BaseAdapter {
-        var context: Context? = null
-        var carrito: Carrito = Carrito()
+    fun fillTask(){
+        tasks.add(Task("Practice 1", arrayListOf("Monday","Sunday"),"07:30"))
+        tasks.add(Task("Practice 2", arrayListOf("Saturday","Thursday"),"17:30"))
+        tasks.add(Task("Practice 3", arrayListOf("Wednesday","Tuesday"),"20:20"))
+        tasks.add(Task("Practice 4", arrayListOf("Friday"),"11:11"))
+        tasks.add(Task("Practice 5", arrayListOf("Monday"),"03:01"))
+        tasks.add(Task("Practice 6", arrayListOf("Sunday"),"00:00"))
+        tasks.add(Task("Practice 7", arrayListOf("Wednesday"),"023:59"))
 
-        constructor(context: Context?, carrito: Carrito) {
-            this.context = context
-            this.carrito = carrito
+    }
+
+    private class AdaptadorTareas: BaseAdapter{
+        var tasks=ArrayList<Task>()
+        var contexto: Context? = null
+
+        constructor(context: Context,tasks: ArrayList<Task>){
+            this.contexto=context
+            this.tasks=tasks
         }
 
-        override fun getCount(): Int {
-            return carrito.recordatorios.size
+        override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
+            var task = tasks[position]
+            var inflator = LayoutInflater.from(contexto)
+            var vista = inflator.inflate(R.layout.task_view,null)
+
+            var tv_title: TextView= vista.findViewById(R.id.tv_title)
+            var tv_time: TextView= vista.findViewById(R.id.tv_time)
+            var tv_days: TextView= vista.findViewById(R.id.tv_days)
+
+            tv_title.setText(task.title)
+            tv_time.setText(task.time)
+            tv_days.setText(task.days.toString())
+
+            return vista
         }
 
         override fun getItem(position: Int): Any {
-            return carrito.recordatorios[position]
+            return tasks[position]
         }
 
         override fun getItemId(position: Int): Long {
             return position.toLong()
         }
 
-        override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
-            var recordatorio = carrito.recordatorios[position]
-            var inflator =
-                context!!.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
-            var vista = inflator.inflate(R.layout.recordatorio, null)
-
-            vista.txtDiasRecordatorio.setText(recordatorio.dias)
-            vista.txtNombreRecordatorio.setText(recordatorio.nombre)
-            vista.txtTiempoRecordatorio.setText(recordatorio.tiempo)
-
-            return vista
+        override fun getCount(): Int {
+            return tasks.size
         }
     }
 }
